@@ -1,7 +1,7 @@
 # Blueshift Vault
 
 This is Solana Anchor program, a simple vault that lets users deposit and withdraw SOL. I learned this from Blueshift, and I'm documenting what I learned along the way.
-Blueshift -> https://learn.blueshift.gg/en/challenges/anchor-vault
+[Blueshift Challenge Link](https://learn.blueshift.gg/en/challenges/anchor-vault)
 
 ## About
 
