@@ -43,24 +43,6 @@ Here's what I learned while implementing deposit:
 
 3. **Transfer the lamports** - This was my first time using a CPI (Cross-Program Invocation). I learned that `transfer()` is a helper function from Anchor that calls the System Program to move SOL. The `?` at the end handles errors.
 
-```rust
-pub fn deposit(ctx: Context<VaultAction>, amount: u64) -> Result<()> {
-    require_eq!(ctx.accounts.vault.lamports(), 0, VaultError::VaultAlreadyExists);
-    require_gt!(amount, Rent::get()?.minimum_balance(0), VaultError::InvalidAmount);
-    transfer(
-        CpiContext::new(
-            ctx.accounts.system_program.to_account_info(),
-            Transfer {
-                from: ctx.accounts.signer.to_account_info(),
-                to: ctx.accounts.vault.to_account_info(),
-            },
-        ),
-        amount,
-    )?;
-    Ok(())
-}
-```
-
 ## Withdraw Function
 
 I had to learn about PDA signing:
@@ -69,29 +51,6 @@ I had to learn about PDA signing:
 2. **Check minimum balance** - Make sure there's enough to withdraw (more than rent-exempt minimum)
 3. **Create signer seeds** - learned that to sign on behalf of a PDA, I need to provide the seeds that created it, plus the bump. Anchor gives me `ctx.bumps.vault` which is the bump it found earlier.
 4. **Transfer with PDA signing** - We use `CpiContext::new_with_signer` instead of `new` because the vault needs to sign the transfer. The seeds prove that we are allowed to move funds from this specific PDA.
-
-```rust
-pub fn withdraw(ctx: Context<VaultAction>) -> Result<()> {
-    let vault_lamports = ctx.accounts.vault.lamports();
-    let min_balance = Rent::get()?.minimum_balance(0);
-    require_gt!(vault_lamports, min_balance, VaultError::InvalidAmount);
-    require_gte!(vault_lamports, min_balance, VaultError::InsufficientFunds);
-    let signer_key = ctx.accounts.signer.key();
-    let signer_seeds = &[b"vault", signer_key.as_ref(), &[ctx.bumps.vault]];
-    transfer(
-        CpiContext::new_with_signer(
-            ctx.accounts.system_program.to_account_info(),
-            Transfer {
-                from: ctx.accounts.vault.to_account_info(),
-                to: ctx.accounts.signer.to_account_info(),
-            },
-            &[&signer_seeds[..]]
-        ),
-        vault_lamports
-    )?;
-    Ok(())
-}
-```
 
 ## Error Handling
 
